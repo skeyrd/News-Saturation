@@ -1,0 +1,99 @@
+---
+title: "News Saturation DB Initial Exploration"
+---
+  
+```{r results='hide', message=FALSE, warning=FALSE}
+
+## exploring database
+
+library(httr)
+library(jsonlite)
+library(lubridate)
+library(tidyverse)
+library(plyr)
+library(RODBC)
+library(RODBCext)
+library(ngram)
+library(stringr)
+library(tm)
+```
+
+get DB stuff
+
+```{r results='hide', message=FALSE, warning=FALSE}
+
+myServer <- odbcDriverConnect('driver={SQL Server};server=RIC007\\SEBISERVER;database=news;trusted_connection=true')
+
+## git eet allllll outta thur
+
+queryGitEm <- "select * from top_news_full"
+
+myDBframe <- sqlQuery(myServer,queryGitEm)
+
+```
+
+take a peek
+
+```{r}
+glimpse(myDBframe)
+```
+
+most frequently used single words- no stop words removed
+```{r}
+
+decontstructText <-  function (vector){
+titleVector_0<- as.vector(vector) 
+titleVector<- str_split(titleVector_0," ")
+titleVector_2<- unlist(titleVector)
+titleVector<- data.frame(table(titleVector_2))
+
+TV <- split(titleVector, titleVector$Freq > 100)
+TV_2 <- as.data.frame(TV[2])
+return (TV_2)
+
+}
+
+
+
+humbug1 <- decontstructText(myDBframe$articlesdescription)
+titleVector_0<- as.vector(myDBframe$articlesdescription) 
+titleVector<- str_split(titleVector_0," ")
+titleVector_2<- unlist(titleVector)
+titleVector<- data.frame(table(titleVector_2))
+
+TV <- split(titleVector, titleVector$Freq > 100)
+TV_2 <- as.data.frame(TV[2])
+
+
+glimpse(as.data.frame(humbug1[with(humbug1, order(-TRUE.Freq)), ]))
+
+
+
+
+```
+
+now lets look at most common 3 length ngrams, 
+```{r}
+helloWorld <- concatenate(titleVector_0)
+
+helloWorld<- preprocess(helloWorld, case = "lower", remove.punct = TRUE,
+remove.numbers = FALSE, fix.spacing = TRUE)
+
+
+nope<- ngram(helloWorld, n = 3)
+
+
+
+phraseBaby <- get.phrasetable(nope)
+
+glimpse(as.data.frame(phraseBaby))
+
+
+```
+
+check out a random babble
+```{r}
+
+babbler <-babble(nope, genlen=15, seed=1234)
+babbler
+```
